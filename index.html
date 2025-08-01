@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Rendimiento y Operaciones - Julio, 2025</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony -->
+    <!-- Application Structure Plan: La aplicación mantiene la navegación por pestañas. Se ha modificado para incluir tablas de datos directamente debajo de todos los gráficos de análisis (Diario, Técnicos, Asesores, Motivos), cumpliendo con la solicitud del usuario. Esta estructura combina la visualización de alto nivel con el detalle numérico en cada vista, facilitando una comprensión completa sin salir de la sección. -->
+    <!-- Visualization & Content Choices: 1. KPIs y Gráficos: Se mantiene la estructura visual. El gráfico de rendimiento diario se ha mejorado a un combo de barras y líneas (promedio móvil) para un mejor análisis de tendencias. 2. Tablas de Datos: Se han añadido tablas estáticas HTML/CSS debajo de todos los gráficos en sus respectivas secciones. Estas tablas presentan los mismos datos que los gráficos, proporcionando los valores numéricos exactos para un análisis detallado y complementando la visualización. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            min-height: 450px;
+            padding: 1.5rem;
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .tab {
+            cursor: pointer;
+            padding: 0.75rem 1.5rem;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .tab.active {
+            border-bottom-color: #3b82f6;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body class="text-slate-700">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-800">Reporte de Rendimiento y Operaciones</h1>
+            <p class="text-lg text-slate-500 mt-2">Julio, 2025</p>
+        </header>
+
+        <nav class="flex justify-center border-b border-slate-200 mb-8 flex-wrap">
+            <div class="tab active" data-tab="resumen">Resumen</div>
+            <div class="tab" data-tab="diario">Rendimiento Diario</div>
+            <div class="tab" data-tab="tecnicos">Análisis de Técnicos</div>
+            <div class="tab" data-tab="asesores">Análisis de Asesores</div>
+            <div class="tab" data-tab="reagendas">Motivos de Reagenda</div>
+        </nav>
+
+        <div id="resumen" class="tab-content active">
+            <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+                <h2 class="text-2xl font-bold text-slate-800 mb-3">Resumen Ejecutivo</h2>
+                <p class="text-slate-600 leading-relaxed">
+                    Este informe detalla el rendimiento operativo del departamento de instalaciones durante el mes de julio. A pesar de los desafíos, se completó un total de <strong>838 instalaciones</strong> de fibra óptica. Un factor clave fue la <strong>restricción gubernamental (22-29 de julio)</strong> que prohibió labores en posteadura, obligando al equipo a centrarse en trabajos internos y rurales. A pesar de 111 reagendamientos, se logró una <strong>tasa de recuperación del 41.4%</strong>, instalando exitosamente a 46 de estos clientes.
+                </p>
+            </div>
+            <section id="kpis" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                    <h3 class="text-lg font-semibold text-slate-500">Total de Instalaciones</h3>
+                    <p class="text-5xl font-bold text-blue-600 mt-2">838</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                    <h3 class="text-lg font-semibold text-slate-500">Total de Reagendamientos</h3>
+                    <p class="text-5xl font-bold text-amber-500 mt-2">111</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                    <h3 class="text-lg font-semibold text-slate-500">Tasa de Recuperación</h3>
+                    <p class="text-5xl font-bold text-green-600 mt-2">41.4%</p>
+                </div>
+            </section>
+        </div>
+
+        <div id="diario" class="tab-content space-y-8">
+            <div class="chart-container">
+                <canvas id="dailyPerformanceChart"></canvas>
+            </div>
+            <p class="text-center text-sm text-slate-500 -mt-6">La zona sombreada indica el período de restricción gubernamental (22-29 de julio).</p>
+            <div class="bg-white p-6 rounded-lg shadow-md table-wrapper">
+                <h3 class="text-xl font-bold text-slate-800 mb-4">Datos de Rendimiento Diario</h3>
+                <table id="dailyTable" class="w-full text-sm text-left text-slate-500">
+                    <thead class="text-xs text-slate-700 uppercase bg-slate-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">Fecha</th>
+                            <th scope="col" class="px-6 py-3 text-center">Instalaciones</th>
+                            <th scope="col" class="px-6 py-3 text-center">Promedio Móvil (7 días)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tecnicos" class="tab-content space-y-8">
+             <div class="chart-container">
+                <canvas id="technicianPerformanceChart"></canvas>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md table-wrapper">
+                <h3 class="text-xl font-bold text-slate-800 mb-4">Datos de Rendimiento por Técnico</h3>
+                <table id="technicianTable" class="w-full text-sm text-left text-slate-500">
+                    <thead class="text-xs text-slate-700 uppercase bg-slate-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">Técnico</th>
+                            <th scope="col" class="px-6 py-3 text-center">Instalaciones</th>
+                            <th scope="col" class="px-6 py-3 text-center">Reagendas</th>
+                            <th scope="col" class="px-6 py-3 text-center">Total Asignado</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="asesores" class="tab-content space-y-8">
+            <div class="chart-container">
+                <canvas id="advisorPerformanceChart"></canvas>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md table-wrapper">
+                <h3 class="text-xl font-bold text-slate-800 mb-4">Datos de Rendimiento por Asesor</h3>
+                <table id="advisorTable" class="w-full text-sm text-left text-slate-500">
+                     <thead class="text-xs text-slate-700 uppercase bg-slate-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">Asesor</th>
+                            <th scope="col" class="px-6 py-3 text-center">Instalaciones Concretadas</th>
+                            <th scope="col" class="px-6 py-3 text-center">Reagendados</th>
+                            <th scope="col" class="px-6 py-3 text-center">Total Asignado</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="reagendas" class="tab-content space-y-8">
+            <div class="max-w-4xl mx-auto chart-container">
+                <canvas id="rescheduleReasonsChart"></canvas>
+            </div>
+            <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md table-wrapper">
+                 <h3 class="text-xl font-bold text-slate-800 mb-4">Datos de Motivos de Reagenda</h3>
+                <table id="reasonsTable" class="w-full text-sm text-left text-slate-500">
+                     <thead class="text-xs text-slate-700 uppercase bg-slate-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">Motivo</th>
+                            <th scope="col" class="px-6 py-3 text-center">Porcentaje</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer class="text-center mt-12 text-slate-500 text-sm">
+            <p>Departamento de Planificación | Agosto 2025</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            let charts = {};
+
+            const technicianRawData = [
+                { name: 'Randy Moreno', installs: 115, reschedules: 5 }, { name: 'Henry Cartaya', installs: 111, reschedules: 5 },
+                { name: 'Alexis Gil', installs: 104, reschedules: 6 }, { name: 'Armando Gonzalez', installs: 103, reschedules: 12 },
+                { name: 'Luis Rodriguez', installs: 97, reschedules: 12 }, { name: 'Yoswell Macayo', installs: 97, reschedules: 8 },
+                { name: 'Carlos Gil', installs: 90, reschedules: 6 }, { name: 'Gabriel Espinoza', installs: 89, reschedules: 7 },
+                { name: 'Douglas Mayobre', installs: 88, reschedules: 5 }, { name: 'Jonathan Gutierrez', installs: 84, reschedules: 19 },
+                { name: 'Deiby Montaña', installs: 79, reschedules: 3 }, { name: 'José Leal', installs: 78, reschedules: 5 },
+                { name: 'Carlos Araujo', installs: 68, reschedules: 14 }, { name: 'Simon Torres', installs: 62, reschedules: 4 },
+                { name: 'Keithmel Marcano', installs: 62, reschedules: 7 }, { name: 'Alexis Garcia', installs: 45, reschedules: 7 },
+                { name: 'David Pereira', installs: 45, reschedules: 7 }, { name: 'Kevin Ocio', installs: 39, reschedules: 4 }
+            ];
+
+            const advisorRawData = [
+                { name: 'Yaisen Herrera', installs: 164, reschedules: 6 }, { name: 'Lorena Esqueda', installs: 127, reschedules: 13 },
+                { name: 'Cindy Infante', installs: 94, reschedules: 12 }, { name: 'Rodger Infante', installs: 11, reschedules: 3 },
+                { name: 'Lisbrai Suarez', installs: 9, reschedules: 5 }, { name: 'Esmeralda Delgado', installs: 7, reschedules: 5 },
+                { name: 'Alejandro Sanchez', installs: 8, reschedules: 2 }, { name: 'Jefferson Plaza', installs: 4, reschedules: 1 },
+                { name: 'Ivoon Viana', installs: 4, reschedules: 0 }, { name: 'Yennifer Torres', installs: 3, reschedules: 0 }
+            ];
+            
+            const dailyRawDataInput = [
+                { date: '1/7', installs: 39 }, { date: '2/7', installs: 43 }, { date: '3/7', installs: 35 }, { date: '4/7', installs: 42 },
+                { date: '5/7', installs: 0 }, { date: '6/7', installs: 0 }, { date: '7/7', installs: 43 }, { date: '8/7', installs: 43 },
+                { date: '9/7', installs: 42 }, { date: '10/7', installs: 41 }, { date: '11/7', installs: 41 }, { date: '12/7', installs: 15 },
+                { date: '13/7', installs: 0 }, { date: '14/7', installs: 41 }, { date: '15/7', installs: 41 }, { date: '16/7', installs: 25 },
+                { date: '17/7', installs: 41 }, { date: '18/7', installs: 50 }, { date: '19/7', installs: 6 }, { date: '20/7', installs: 0 },
+                { date: '21/7', installs: 42 }, { date: '22/7', installs: 18 }, { date: '23/7', installs: 18 }, { date: '24/7', installs: 0 },
+                { date: '25/7', installs: 19 }, { date: '26/7', installs: 0 }, { date: '27/7', installs: 0 }, { date: '28/7', installs: 27 },
+                { date: '29/7', installs: 41 }, { date: '30/7', installs: 42 }, { date: '31/7', installs: 45 }
+            ];
+
+            const calculateMovingAverage = (data, windowSize) => {
+                let result = [];
+                for (let i = 0; i < data.length; i++) {
+                    if (i < windowSize - 1) {
+                        result.push(null);
+                    } else {
+                        const window = data.slice(i - windowSize + 1, i + 1);
+                        const sum = window.reduce((acc, val) => acc + val, 0);
+                        result.push((sum / windowSize).toFixed(2));
+                    }
+                }
+                return result;
+            };
+
+            const dailyInstalls = dailyRawDataInput.map(d => d.installs);
+            const movingAverage7Day = calculateMovingAverage(dailyInstalls, 7);
+            const dailyRawData = dailyRawDataInput.map((d, i) => ({ ...d, movingAverage: movingAverage7Day[i] }));
+
+            const reasonsRawData = [
+                { reason: 'Motivos Personales', percentage: 31 }, { reason: 'No se Obtuvo Respuesta', percentage: 17 },
+                { reason: 'Condominio/Acceso Inhabilitado', percentage: 14 }, { reason: 'Problema de Factibilidad', percentage: 19 },
+                { reason: 'Reagendado por Cliente', percentage: 19 }
+            ];
+
+            const populateTable = (tbodyId, data, columns) => {
+                const tbody = document.querySelector(`#${tbodyId} tbody`);
+                if (!tbody) return;
+                tbody.innerHTML = '';
+                data.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.className = `border-b ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`;
+                    
+                    columns.forEach(col => {
+                        const cell = document.createElement('td');
+                        cell.className = `px-6 py-4 ${col.align || 'text-left'}`;
+                        if (col.isBold) {
+                            cell.classList.add('font-medium', 'text-slate-900');
+                        }
+                        cell.textContent = col.render(item);
+                        row.appendChild(cell);
+                    });
+                    tbody.appendChild(row);
+                });
+            };
+
+            populateTable('dailyTable', dailyRawData, [
+                { render: item => item.date, isBold: true },
+                { render: item => item.installs, align: 'text-center' },
+                { render: item => item.movingAverage || '-', align: 'text-center' }
+            ]);
+            populateTable('reasonsTable', reasonsRawData, [
+                { render: item => item.reason, isBold: true },
+                { render: item => `${item.percentage}%`, align: 'text-center' }
+            ]);
+            populateTable('technicianTable', technicianRawData, [
+                { render: item => item.name, isBold: true },
+                { render: item => item.installs, align: 'text-center' },
+                { render: item => item.reschedules, align: 'text-center' },
+                { render: item => item.installs + item.reschedules, align: 'text-center', isBold: true }
+            ]);
+            populateTable('advisorTable', advisorRawData, [
+                { render: item => item.name, isBold: true },
+                { render: item => item.installs, align: 'text-center' },
+                { render: item => item.reschedules, align: 'text-center' },
+                { render: item => item.installs + item.reschedules, align: 'text-center', isBold: true }
+            ]);
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(item => item.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    const target = tab.getAttribute('data-tab');
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === target) {
+                            content.classList.add('active');
+                        }
+                    });
+                    
+                    setTimeout(() => {
+                        Object.values(charts).forEach(chart => {
+                            if (chart && typeof chart.resize === 'function') {
+                                chart.resize();
+                            }
+                        });
+                    }, 0);
+                });
+            });
+
+            const dailyData = {
+                labels: dailyRawData.map(d => d.date),
+                datasets: [{
+                    type: 'bar',
+                    label: 'Instalaciones Diarias',
+                    data: dailyRawData.map(d => d.installs),
+                    backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    order: 2
+                }, {
+                    type: 'line',
+                    label: 'Promedio Móvil (7 días)',
+                    data: dailyRawData.map(d => d.movingAverage),
+                    borderColor: 'rgb(234, 88, 12)',
+                    backgroundColor: 'rgba(234, 88, 12, 0.1)',
+                    tension: 0.3,
+                    pointRadius: 3,
+                    pointBackgroundColor: 'rgb(234, 88, 12)',
+                    fill: false,
+                    order: 1
+                }]
+            };
+
+            const rescheduleReasonsData = {
+                labels: reasonsRawData.map(d => d.reason),
+                datasets: [{
+                    label: 'Motivos de Reagenda',
+                    data: reasonsRawData.map(d => d.percentage),
+                    backgroundColor: ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981'],
+                    hoverOffset: 4
+                }]
+            };
+
+            const technicianChartData = {
+                labels: technicianRawData.map(d => d.name),
+                datasets: [{
+                    label: 'Instalaciones',
+                    data: technicianRawData.map(d => d.installs),
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                }, {
+                    label: 'Reagendas',
+                    data: technicianRawData.map(d => d.reschedules),
+                    backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                }]
+            };
+
+            const advisorChartData = {
+                labels: advisorRawData.map(d => d.name),
+                datasets: [{
+                    label: 'Instalaciones Concretadas',
+                    data: advisorRawData.map(d => d.installs),
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                }, {
+                    label: 'Reagendados',
+                    data: advisorRawData.map(d => d.reschedules),
+                    backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                }]
+            };
+            
+            const createChart = (ctx, type, data, options) => new Chart(ctx, { type, data, options });
+
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { font: { size: 12 }}},
+                    tooltip: { enabled: true, mode: 'index', intersect: false, backgroundColor: 'rgba(0,0,0,0.8)', titleFont: { size: 14, weight: 'bold' }, bodyFont: { size: 12 }, padding: 10, cornerRadius: 4 }
+                },
+                scales: {
+                    x: { ticks: { font: { size: 10 }}, grid: { display: false }},
+                    y: { beginAtZero: true, ticks: { font: { size: 10 }}, grid: { color: 'rgba(200, 200, 200, 0.2)' }}
+                }
+            };
+            
+            const stackedBarOptions = { 
+                ...commonOptions, 
+                indexAxis: 'y', 
+                scales: { 
+                    x: { stacked: true, beginAtZero: true, grid: { color: 'rgba(200, 200, 200, 0.2)' }, ticks: { font: { size: 10 }}}, 
+                    y: { stacked: true, grid: { display: false }, ticks: { font: { size: 10 }}}
+                }
+            };
+
+            charts.daily = createChart(document.getElementById('dailyPerformanceChart').getContext('2d'), 'bar', dailyData, {
+                ...commonOptions,
+                plugins: { ...commonOptions.plugins, title: { display: true, text: 'Rendimiento Diario y Tendencia', font: { size: 16, weight: 'bold' }, padding: { top: 10, bottom: 20 } },
+                    annotation: { annotations: { restrictionBox: { type: 'box', xMin: 21.5, xMax: 28.5, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.3)', borderWidth: 1 }}}}
+            });
+
+            charts.reasons = createChart(document.getElementById('rescheduleReasonsChart').getContext('2d'), 'doughnut', rescheduleReasonsData, {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'right', labels: { font: { size: 11 }}}, title: { display: true, text: 'Análisis de Motivos de Reagenda', font: { size: 16, weight: 'bold' }, padding: { top: 10, bottom: 20 } },
+                    tooltip: { callbacks: { label: (context) => `${context.label || ''}: ${context.parsed || 0}%` }}}
+            });
+
+            charts.technician = createChart(document.getElementById('technicianPerformanceChart').getContext('2d'), 'bar', technicianChartData, { ...stackedBarOptions, plugins: { ...stackedBarOptions.plugins, title: { display: true, text: 'Volumen de Trabajo por Técnico (Instalaciones vs. Reagendas)', font: { size: 16, weight: 'bold' }, padding: { top: 10, bottom: 20 }}}});
+            charts.advisor = createChart(document.getElementById('advisorPerformanceChart').getContext('2d'), 'bar', advisorChartData, { ...stackedBarOptions, plugins: { ...stackedBarOptions.plugins, title: { display: true, text: 'Volumen de Trabajo por Asesor (Instalaciones vs. Reagendas)', font: { size: 16, weight: 'bold' }, padding: { top: 10, bottom: 20 }}}});
+        });
+    </script>
+</body>
+</html>
+
